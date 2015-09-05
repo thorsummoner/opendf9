@@ -1,3 +1,19 @@
+"""
+    Loading screen
+
+    TODO:
+     - [ ] Loading Preroll
+        - [ ] Skip indicator obvious when loading complete
+        - [ ] Display short slides if user has skipped before
+        - [ ] Credit:
+            - [ ] Doubble Fine (Inspiration, Core)
+            - [ ] Chris Sawyer (RTC 1,2, TTD) (Inspiration)
+            - [ ] FOSS Software (Topic)
+            - [ ] Python (Topic)
+            - [ ] Branding for Open source games (Topic)
+            - [ ] System76 for Hardware (Special Thanks)
+"""
+
 import textwrap
 
 import df9.version_git
