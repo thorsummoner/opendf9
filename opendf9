@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import df9.main
+import df9
 
 if __name__ == '__main__':
-    exit(df9.main.main())
+    exit(df9.OpenDf9Window().main())

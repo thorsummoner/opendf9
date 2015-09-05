@@ -3,22 +3,18 @@
 import window
 import os
 
-class ExampleWindow(window.Window):
+class OpenDf9Window(window.Window):
     """
-        Gui application interface.
+        Main application window
     """
 
-    GLADE_FILE = os.path.splitext(__file__)[0] + '.glade'
+    GLADE_FILE = 'main.glade'
 
     def __init__(self):
-        super(ExampleWindow, self).__init__()
+        super(OpenDf9Window, self).__init__()
 
 
     class Handler(window.Window.BaseHandler):
         """
             Main Window Event Handler
         """
-
-
-if __name__ == '__main__':
-    exit(ExampleWindow().main())

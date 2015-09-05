@@ -39,9 +39,7 @@ class Window(Gtk.Window):
             Gtk.main wrapper.
         """
         signal.signal(signal.SIGINT, signal.SIG_DFL)
-        print('Main Enter')
         Gtk.main()
-        print('Main Exit')
 
     class BaseHandler(object):
         """
