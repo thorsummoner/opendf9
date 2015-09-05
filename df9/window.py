@@ -69,3 +69,31 @@ class Window(Gtk.Window):
             Gtk.main_quit(*args)
 
     # pylint: enable=no-member
+
+
+@staticmethod
+def draw(widget, ct):
+    """
+        Draw Diagnostic Marks
+    """
+    width = widget.get_allocated_width()
+    height = widget.get_allocated_height()
+    ct.set_source_rgb(0, 0, 0)
+    ct.move_to(0 * width, 0 * height)
+    ct.line_to(1 * width, 1 * height)
+    ct.move_to(1 * width, 0 * height)
+    ct.line_to(0 * width, 1 * height)
+    ct.set_line_width(20)
+    ct.stroke()
+
+    ct.rectangle(0*width, 0*height, 0.5*width, 0.5*height)
+    ct.set_source_rgba(1, 0, 0, 0.80)
+    ct.fill()
+
+    ct.rectangle(0*width, 0.5*height, 0.5*width, 0.5*height)
+    ct.set_source_rgba(0, 1, 0, 0.60)
+    ct.fill()
+
+    ct.rectangle(0.5*width, 0*height, 0.5*width, 0.5*height)
+    ct.set_source_rgba(0, 0, 1, 0.40)
+    ct.fill()
