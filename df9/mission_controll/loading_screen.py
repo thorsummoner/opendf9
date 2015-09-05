@@ -17,14 +17,7 @@
 import textwrap
 
 import df9.version_git
-
-class MissionControll(object):
-    CONTAINER = NotImplementedError
-
-    def __init__(self, app):
-        super(MissionControll, self).__init__()
-        self.app = app
-        self.widget = app.builder.get_object(self.CONTAINER)
+from df9.mission_controll import MissionControll
 
 class LoadingScreen(MissionControll):
     CONTAINER = 'loading'
