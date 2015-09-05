@@ -27,9 +27,15 @@ class OpenDf9Window(window.Window):
             df9.mission_controll.LoadingScreen(self).widget
         )
 
+        # Show new game screen
+        self._replace_child(
+            self.main_container,
+            df9.mission_controll.EdenLauncher(self).widget
+        )
+
     def _replace_child(self, container, new_child):
         for child in container.get_children():
-            import pdb; pdb.set_trace()
+            container.remove(child)
         container.add(new_child)
 
 
