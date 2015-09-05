@@ -43,8 +43,8 @@ class EdenLauncher(MissionControll):
 
         DIAGONAL_RATE = 0.3
         AMBER_ACCENT_SHIFT = 1.5
-        COLOR_AMBER = (227/FULL, 98/FULL, 59/FULL)
-        COLOR_DARK_AMBER = (242/FULL, 179/FULL, 69/FULL)
+        COLOR_DARK_AMBER = (227/FULL, 98/FULL, 59/FULL)
+        COLOR_AMBER = (242/FULL, 179/FULL, 69/FULL)
         COORDINATE_INFO_OFFSET = (-24, 10)
 
         cursor_pos = None
@@ -106,7 +106,7 @@ class EdenLauncher(MissionControll):
 
                 if 'coordinate_info_offset':
 
-                    ct.set_source_rgb(1,1,1)
+                    ct.set_source_rgb(*self.COLOR_AMBER)
 
                     ct.select_font_face("ProFontWindows", cairo.FONT_SLANT_NORMAL,
                         cairo.FONT_WEIGHT_NORMAL)
@@ -154,13 +154,13 @@ class EdenLauncher(MissionControll):
                 Stroke a two-tone line.
             """
 
-            ct.set_source_rgb(*self.COLOR_AMBER)
+            ct.set_source_rgb(*self.COLOR_DARK_AMBER)
             ct.set_line_width(2)
             ct.move_to(x1+self.AMBER_ACCENT_SHIFT, y1+self.AMBER_ACCENT_SHIFT)
             ct.line_to(x2+self.AMBER_ACCENT_SHIFT, y2+self.AMBER_ACCENT_SHIFT)
             ct.stroke()
 
-            ct.set_source_rgb(*self.COLOR_DARK_AMBER)
+            ct.set_source_rgb(*self.COLOR_AMBER)
             ct.set_line_width(2)
             ct.move_to(x1, y1)
             ct.line_to(x2, y2)
