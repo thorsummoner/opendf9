@@ -34,6 +34,16 @@ class Window(Gtk.Window):
         self.window.show_all()
 
     @staticmethod
+    def replace_child(container, new_child):
+        """
+            Remove all elements from container and add an element
+            to the container.
+        """
+        for child in container.get_children():
+            container.remove(child)
+        container.add(new_child)
+
+    @staticmethod
     def main():
         """
             Gtk.main wrapper.
