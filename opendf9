@@ -1,6 +1,26 @@
 #!/usr/bin/env python2
 
+"""
+    OpenDF9
+"""
+
+import argparse
+
 import df9
 
+ARGP = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.RawTextHelpFormatter,
+)
+ARGP.add_argument('--dev', action='store_true', help='Dev tools')
+
+
+def main(argp=None):
+    if argp is None:
+        argp = ARGP.parse_args()
+
+    exit(df9.OpenDf9Window(dev=argp.dev).main())
+
+
 if __name__ == '__main__':
-    exit(df9.OpenDf9Window().main())
+    main()

@@ -8,9 +8,9 @@ class OpenDf9Window(window.Window):
         Main application window
     """
 
-    GLADE_FILE = 'main.glade'
+    GLADE_FILE = '.glade'
 
-    def __init__(self):
+    def __init__(self, dev=False):
         super(OpenDf9Window, self).__init__()
 
 
