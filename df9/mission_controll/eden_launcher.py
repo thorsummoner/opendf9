@@ -4,8 +4,11 @@
 
 from gi.repository import Gdk
 from gi.repository import GdkPixbuf
+import cairo
 
 from df9.mission_controll import MissionControll
+
+FULL = 256.0
 
 class EdenLauncher(MissionControll):
     CONTAINER = 'eden'
@@ -38,9 +41,13 @@ class EdenLauncher(MissionControll):
 
     class DrawingAreaHandler(object):
 
-        cursor_pos = None
         DIAGONAL_RATE = 0.3
         AMBER_ACCENT_SHIFT = 1.5
+        COLOR_AMBER = (227/FULL, 98/FULL, 59/FULL)
+        COLOR_DARK_AMBER = (242/FULL, 179/FULL, 69/FULL)
+        COORDINATE_INFO_OFFSET = (-24, 10)
+
+        cursor_pos = None
 
         def __init__(self, parent, app):
             super(EdenLauncher.DrawingAreaHandler, self).__init__()
@@ -97,19 +104,63 @@ class EdenLauncher(MissionControll):
                     width, cursor_y + ((width - cursor_x) * self.DIAGONAL_RATE)
                 )
 
+                if 'coordinate_info_offset':
+
+                    ct.set_source_rgb(1,1,1)
+
+                    ct.select_font_face("ProFontWindows", cairo.FONT_SLANT_NORMAL,
+                        cairo.FONT_WEIGHT_NORMAL)
+                    ct.set_font_size(13)
+
+                    ct.move_to(20, 30)
+                    ct.show_text("MOST RELATIONSHIPS SEEM SO TRANSITORY")
+                    ct.move_to(20, 60)
+                    ct.show_text("THEY'RE ALL GOOD BUT NOT THE PERMANENT ONE")
+                    ct.move_to(20, 120)
+                    ct.show_text("WHO DOESN'T LONG FOR SOMEONE TO HOLD")
+                    ct.move_to(20, 150)
+                    ct.show_text("WHO KNOWS HOW TO LOVE WITHOUT BEING TOLD")
+                    ct.move_to(20, 180)
+                    ct.show_text("SOMEBODY TELL ME WHY I'M ON MY OWN")
+                    ct.move_to(20, 210)
+                    ct.show_text("IF THERE'S A SOULMATE FOR EVERYONE")
+
+                    # utf8 = "cairo"
+
+                    # ct.select_font_face (ct, "Sans", ct.FONT_SLANT_NORMAL, ct.FONT_WEIGHT_NORMAL)
+                    # cairo_set_font_size (ct, 52.0)
+
+                    # cairo_text_extents (ct, utf8, &extents);
+                    # x = 128.0-(extents.width/2 + extents.x_bearing);
+                    # y = 128.0-(extents.height/2 + extents.y_bearing);
+
+                    # cairo_move_to (ct, x, y);
+                    # cairo_show_text (ct, utf8);
+
+                    # /* draw helping lines */
+                    # cairo_set_source_rgba (ct, 1, 0.2, 0.2, 0.6);
+                    # cairo_set_line_width (ct, 6.0);
+                    # cairo_arc (ct, x, y, 10.0, 0, 2*M_PI);
+                    # cairo_fill (ct);
+                    # cairo_move_to (ct, 128.0, 0);
+                    # cairo_rel_line_to (ct, 0, 256);
+                    # cairo_move_to (ct, 0, 128.0);
+                    # cairo_rel_line_to (ct, 256, 0);
+                    # cairo_stroke (ct);
+
 
         def _amber_line(self, ct, x1, y1, x2, y2):
             """
                 Stroke a two-tone line.
             """
 
-            ct.set_source_rgb(227/256.0, 98/256.0, 59/256.0)
+            ct.set_source_rgb(*self.COLOR_AMBER)
             ct.set_line_width(2)
             ct.move_to(x1+self.AMBER_ACCENT_SHIFT, y1+self.AMBER_ACCENT_SHIFT)
             ct.line_to(x2+self.AMBER_ACCENT_SHIFT, y2+self.AMBER_ACCENT_SHIFT)
             ct.stroke()
 
-            ct.set_source_rgb(242/256.0, 179/256.0, 69/256.0)
+            ct.set_source_rgb(*self.COLOR_DARK_AMBER)
             ct.set_line_width(2)
             ct.move_to(x1, y1)
             ct.line_to(x2, y2)
