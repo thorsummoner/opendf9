@@ -41,7 +41,7 @@ class EdenLauncher(MissionControll):
 
     class DrawingAreaHandler(object):
 
-        DIAGONAL_RATE = 0.3
+        DIAGONAL_RATE = 0.49
         AMBER_ACCENT_SHIFT = 1.5
         COLOR_DARK_AMBER = (227/FULL, 98/FULL, 59/FULL)
         COLOR_AMBER = (242/FULL, 179/FULL, 69/FULL)
