@@ -11,6 +11,10 @@ from df9.fontloader import FontLoader
 
 FULL = 256.0
 
+TEXT_EXTENTS_KEYS = ('x_bearing', 'y_bearing', 'width', 'height', 'x_advance', 'y_advance')
+CELLS_WIDTH = 60
+CELLS_HEIGHT = 60
+
 class EdenLauncher(MissionControll):
     CONTAINER = 'eden'
 
@@ -42,6 +46,14 @@ class EdenLauncher(MissionControll):
         eden_drawingarea.connect('motion_notify_event', eden_drawing_handler.motion_notify_event)
         eden_drawingarea.connect('button_release_event',  eden_drawing_handler.button_release_event)
 
+    def get_cell(self, cursor_percent_x, cursor_percent_y):
+        cell_x = round(cursor_percent_x * CELLS_WIDTH)
+        cell_y = round(cursor_percent_y * CELLS_HEIGHT)
+        return (
+            int(cell_x if cell_x > 0 else 1),
+            int(cell_y if cell_y > 0 else 1),
+        )
+
     class DrawingAreaHandler(object):
 
         DIAGONAL_RATE = 0.49
@@ -49,6 +61,8 @@ class EdenLauncher(MissionControll):
         COLOR_DARK_AMBER = (227/FULL, 98/FULL, 59/FULL)
         COLOR_AMBER = (242/FULL, 179/FULL, 69/FULL)
         COORDINATE_INFO_OFFSET = (-24, 10)
+        COORD_X_OFF = 10
+        COORD_Y_OFF = 48
 
         cursor_pos = None
 
@@ -118,46 +132,23 @@ class EdenLauncher(MissionControll):
                 if 'coordinate_info_offset':
                     ct.set_font_face(self.parent.FONT_FACE)
 
-                    ct.set_source_rgb(*self.COLOR_AMBER)
+                    ct.set_font_size(20)
+                    text_coord = "({:>2}, {:>2})".format(*self.parent.get_cell(
+                        cursor_x / width,
+                        cursor_y / height
+                    ))
+                    text_coord_extents = dict(zip(
+                        TEXT_EXTENTS_KEYS,
+                        ct.text_extents(text_coord)
+                    ))
 
-                    ct.set_font_size(13)
-
-                    ct.move_to(20, 30)
-                    ct.show_text("MOST RELATIONSHIPS SEEM SO TRANSITORY")
-                    ct.move_to(20, 60)
-                    ct.show_text("THEY'RE ALL GOOD BUT NOT THE PERMANENT ONE")
-                    ct.move_to(20, 120)
-                    ct.show_text("WHO DOESN'T LONG FOR SOMEONE TO HOLD")
-                    ct.move_to(20, 150)
-                    ct.show_text("WHO KNOWS HOW TO LOVE WITHOUT BEING TOLD")
-                    ct.move_to(20, 180)
-                    ct.show_text("SOMEBODY TELL ME WHY I'M ON MY OWN")
-                    ct.move_to(20, 210)
-                    ct.show_text("IF THERE'S A SOULMATE FOR EVERYONE")
-
-                    # utf8 = "cairo"
-
-                    # ct.select_font_face (ct, "Sans", ct.FONT_SLANT_NORMAL, ct.FONT_WEIGHT_NORMAL)
-                    # cairo_set_font_size (ct, 52.0)
-
-                    # cairo_text_extents (ct, utf8, &extents);
-                    # x = 128.0-(extents.width/2 + extents.x_bearing);
-                    # y = 128.0-(extents.height/2 + extents.y_bearing);
-
-                    # cairo_move_to (ct, x, y);
-                    # cairo_show_text (ct, utf8);
-
-                    # /* draw helping lines */
-                    # cairo_set_source_rgba (ct, 1, 0.2, 0.2, 0.6);
-                    # cairo_set_line_width (ct, 6.0);
-                    # cairo_arc (ct, x, y, 10.0, 0, 2*M_PI);
-                    # cairo_fill (ct);
-                    # cairo_move_to (ct, 128.0, 0);
-                    # cairo_rel_line_to (ct, 0, 256);
-                    # cairo_move_to (ct, 0, 128.0);
-                    # cairo_rel_line_to (ct, 256, 0);
-                    # cairo_stroke (ct);
-
+                    text_coord_x = cursor_x - text_coord_extents['width']
+                    text_coord_y = cursor_y + text_coord_extents['height']
+                    self._amber_text(ct,
+                        (text_coord_x - self.COORD_X_OFF if text_coord_x - self.COORD_X_OFF > 0 else cursor_x + self.COORD_X_OFF),
+                        (text_coord_y + self.COORD_Y_OFF if text_coord_y + self.COORD_Y_OFF < height else cursor_y - self.COORD_Y_OFF),
+                        text_coord
+                    )
 
         def _amber_line(self, ct, x1, y1, x2, y2):
             """
@@ -182,6 +173,14 @@ class EdenLauncher(MissionControll):
             ct.line_to(x2, y2)
             ct.stroke()
 
+        def _amber_text(self, ct, x, y, msg):
+            ct.set_source_rgb(*self.COLOR_DARK_AMBER)
+            ct.move_to(x+self.AMBER_ACCENT_SHIFT, y+self.AMBER_ACCENT_SHIFT)
+            ct.show_text(msg)
+
+            ct.set_source_rgb(*self.COLOR_AMBER)
+            ct.move_to(x, y)
+            ct.show_text(msg)
 
         def motion_notify_event(self, widget, event):
             """
