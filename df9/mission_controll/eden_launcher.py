@@ -145,8 +145,8 @@ class EdenLauncher(MissionControll):
                     text_coord_x = cursor_x - text_coord_extents['width']
                     text_coord_y = cursor_y + text_coord_extents['height']
                     self._amber_text(ct,
-                        (text_coord_x - self.COORD_X_OFF if text_coord_x - self.COORD_X_OFF > 0 else cursor_x + self.COORD_X_OFF),
-                        (text_coord_y + self.COORD_Y_OFF if text_coord_y + self.COORD_Y_OFF < height else cursor_y - self.COORD_Y_OFF),
+                        (text_coord_x - self.COORD_X_OFF if text_coord_x - self.COORD_X_OFF > 10 else cursor_x + self.COORD_X_OFF),
+                        (text_coord_y + self.COORD_Y_OFF if text_coord_y + self.COORD_Y_OFF < height - 10 else cursor_y - self.COORD_Y_OFF),
                         text_coord
                     )
 
@@ -190,4 +190,12 @@ class EdenLauncher(MissionControll):
             self.app.window.get_window().invalidate_rect(None, False)
 
         def button_release_event(self, widget, event):
-            print('click')
+            width = widget.get_allocated_width()
+            height = widget.get_allocated_height()
+            print((
+                'click',
+                self.parent.get_cell(
+                    event.x/width,
+                    event.y/height,
+                )
+            ))
