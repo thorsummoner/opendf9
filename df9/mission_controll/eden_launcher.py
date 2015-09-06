@@ -7,6 +7,7 @@ from gi.repository import GdkPixbuf
 import cairo
 
 from df9.mission_controll import MissionControll
+from df9.fontloader import FontLoader
 
 FULL = 256.0
 
@@ -14,6 +15,8 @@ class EdenLauncher(MissionControll):
     CONTAINER = 'eden'
 
     GALAXY_MAP_BG = 'df9/assets/images/author-eso/2048px-Wide_Field_Imager_view_of_a_Milky_Way_look-alike_NGC_6744.jpg'
+    FONT_FACE_FILE = 'df9/assets/fonts/ProFontWindows.ttf'
+    FONT_FACE = FontLoader().cairo_font_face_from_file(FONT_FACE_FILE)
 
     def __init__(self, app):
         super(EdenLauncher, self).__init__(app)
@@ -113,11 +116,10 @@ class EdenLauncher(MissionControll):
                 ct.set_dash([])
 
                 if 'coordinate_info_offset':
+                    ct.set_font_face(self.parent.FONT_FACE)
 
                     ct.set_source_rgb(*self.COLOR_AMBER)
 
-                    ct.select_font_face("ProFontWindows", cairo.FONT_SLANT_NORMAL,
-                        cairo.FONT_WEIGHT_NORMAL)
                     ct.set_font_size(13)
 
                     ct.move_to(20, 30)
