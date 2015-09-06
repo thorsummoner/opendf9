@@ -42,7 +42,7 @@ class EdenLauncher(MissionControll):
     class DrawingAreaHandler(object):
 
         DIAGONAL_RATE = 0.49
-        AMBER_ACCENT_SHIFT = 1.5
+        AMBER_ACCENT_SHIFT = 1
         COLOR_DARK_AMBER = (227/FULL, 98/FULL, 59/FULL)
         COLOR_AMBER = (242/FULL, 179/FULL, 69/FULL)
         COORDINATE_INFO_OFFSET = (-24, 10)
@@ -103,6 +103,14 @@ class EdenLauncher(MissionControll):
                     0, cursor_y - (cursor_x * self.DIAGONAL_RATE),
                     width, cursor_y + ((width - cursor_x) * self.DIAGONAL_RATE)
                 )
+                # Dashed counter-diagonal line
+                ct.set_dash([14.0, 6.0])
+                self._amber_line(
+                    ct,
+                    cursor_x-width, cursor_y + (width * self.DIAGONAL_RATE),
+                     cursor_x+width, cursor_y - (width * self.DIAGONAL_RATE)
+                )
+                ct.set_dash([])
 
                 if 'coordinate_info_offset':
 
@@ -154,14 +162,20 @@ class EdenLauncher(MissionControll):
                 Stroke a two-tone line.
             """
 
+            ct.set_source_rgba(1, 1, 1, 0.5)
+            ct.set_line_width(2.2)
+            ct.move_to(x1+self.AMBER_ACCENT_SHIFT/2.0, y1+self.AMBER_ACCENT_SHIFT/2.0)
+            ct.line_to(x2+self.AMBER_ACCENT_SHIFT/2.0, y2+self.AMBER_ACCENT_SHIFT/2.0)
+            ct.stroke()
+
             ct.set_source_rgb(*self.COLOR_DARK_AMBER)
-            ct.set_line_width(2)
+            ct.set_line_width(1.4)
             ct.move_to(x1+self.AMBER_ACCENT_SHIFT, y1+self.AMBER_ACCENT_SHIFT)
             ct.line_to(x2+self.AMBER_ACCENT_SHIFT, y2+self.AMBER_ACCENT_SHIFT)
             ct.stroke()
 
             ct.set_source_rgb(*self.COLOR_AMBER)
-            ct.set_line_width(2)
+            ct.set_line_width(1)
             ct.move_to(x1, y1)
             ct.line_to(x2, y2)
             ct.stroke()
