@@ -63,8 +63,10 @@ class FontLoader(object):
 
         return face
 
-if __name__ == '__main__':
-
+def example():
+    """
+        Example font loading.
+    """
     face = FontLoader().cairo_font_face_from_file('df9/assets/fonts/ProFontWindows.ttf', 0)
 
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 128, 128)
