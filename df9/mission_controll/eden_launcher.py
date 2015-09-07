@@ -2,6 +2,8 @@
     Eden initial probe destination picker.
 """
 
+import math
+
 from gi.repository import Gdk
 from gi.repository import GdkPixbuf
 import cairo
@@ -17,6 +19,9 @@ CELLS_HEIGHT = 60
 
 UNIVERSE_SIZE = 28
 UNIVERSE_METRIC = 'Billion Parsecs'
+PARSEC_LIGHTYEAR = 3.262
+
+ORIGINAL_COORD = (0.15116763695057492, 0.37949796350990855)
 
 class EdenLauncher(MissionControll):
     CONTAINER = 'eden'
@@ -24,6 +29,10 @@ class EdenLauncher(MissionControll):
     GALAXY_MAP_BG = 'df9/assets/images/author-eso/2048px-Wide_Field_Imager_view_of_a_Milky_Way_look-alike_NGC_6744.jpg'
     FONT_FACE_FILE = 'df9/assets/fonts/ProFontWindows.ttf'
     FONT_FACE = FontLoader().cairo_font_face_from_file(FONT_FACE_FILE)
+
+    cursor = True
+    last_settlement = ORIGINAL_COORD
+    selected_settlement = None
 
     _selected_coord = None
 
@@ -52,22 +61,43 @@ class EdenLauncher(MissionControll):
         eden_drawingarea.connect('button_release_event',  eden_drawing_handler.button_release_event)
 
         # Get data form elements
-        self.eden_x = app.builder.get_object('eden_x')
-        self.eden_y = app.builder.get_object('eden_y')
+        self.eden_accept = app.builder.get_object('eden_accept')
+
+        self.eden_x1 = app.builder.get_object('eden_x1')
+        self.eden_y1 = app.builder.get_object('eden_y1')
+        if 'last_settlement':
+            self.last_parsec = self.get_parsec(*self.last_settlement)
+            self.eden_x1.set_text('{:.11}'.format(self.last_parsec[0]))
+            self.eden_y1.set_text('{:.11}'.format(self.last_parsec[1]))
+        self.eden_x2 = app.builder.get_object('eden_x2')
+        self.eden_y2 = app.builder.get_object('eden_y2')
+        self.eden_distance = app.builder.get_object('eden_distance')
+        self.eden_arrival = app.builder.get_object('eden_arrival')
 
     @property
     def selected_coord(self):
-        print 'called getter'
         return self._selected_coord
 
     @selected_coord.setter
     def selected_coord(self, value):
         self._selected_coord = self.get_cell(*value)
+        self.selected_settlement = value
+        self.cursor = False
+        self.eden_accept.set_sensitive(True)
 
         parsec = self.get_parsec(*value)
 
-        self.eden_x.set_text(str(parsec[0]))
-        self.eden_y.set_text(str(parsec[1]))
+        self.eden_x2.set_text('{:.11}'.format(parsec[0]))
+        self.eden_y2.set_text('{:.11}'.format(parsec[1]))
+
+        distance = math.sqrt(
+            pow(parsec[0] - self.last_parsec[0], 2)
+            + pow(parsec[1] - self.last_parsec[1], 2)
+        )
+
+        self.eden_distance.set_text(str(distance))
+        self.eden_arrival.set_text(str(distance * PARSEC_LIGHTYEAR))
+
 
 
     def get_cell(self, cursor_percent_x, cursor_percent_y):
@@ -80,8 +110,8 @@ class EdenLauncher(MissionControll):
 
     def get_parsec(self, cursor_percent_x, cursor_percent_y):
         return (
-            '{:>13.10}'.format(cursor_percent_x * UNIVERSE_SIZE),
-            '{:>13.10}'.format(cursor_percent_y * UNIVERSE_SIZE),
+            cursor_percent_x * UNIVERSE_SIZE,
+            cursor_percent_y * UNIVERSE_SIZE,
         )
 
     class DrawingAreaHandler(object):
@@ -140,7 +170,28 @@ class EdenLauncher(MissionControll):
 
                 ct.restore()
 
-            if cursor_y > 0 and cursor_x > 0:
+            if 'last_settlement':
+                self._amber_marker(ct,
+                    self.parent.last_settlement[0]*width,
+                    self.parent.last_settlement[1]*height,
+                )
+            if self.parent.selected_settlement:
+                self._amber_marker(ct,
+                    self.parent.selected_settlement[0]*width,
+                    self.parent.selected_settlement[1]*height,
+                )
+                ct.set_dash([14.0, 6.0])
+                self._amber_line(
+                    ct,
+                    self.parent.last_settlement[0]*width,
+                    self.parent.last_settlement[1]*height,
+                    self.parent.selected_settlement[0]*width,
+                    self.parent.selected_settlement[1]*height,
+                )
+                ct.set_dash([])
+
+
+            if self.parent.cursor and cursor_y > 0 and cursor_x > 0:
                 # Paint a cursor, Vertical Line
                 self._amber_line(ct, cursor_x, 0, cursor_x, height)
 
@@ -212,6 +263,17 @@ class EdenLauncher(MissionControll):
             ct.move_to(x, y)
             ct.show_text(msg)
 
+        def _amber_marker(self, ct, x, y):
+            ct.set_source_rgb(*self.COLOR_DARK_AMBER)
+            ct.arc(x, y, 3, 0, 2*math.pi)
+            ct.fill()
+            ct.set_source_rgb(*self.COLOR_AMBER)
+            ct.arc(x+self.AMBER_ACCENT_SHIFT, y+self.AMBER_ACCENT_SHIFT, 3, 0, 2*math.pi)
+            ct.fill()
+            self._amber_line(ct, x, y, x-8, y-8)
+            self._amber_line(ct, x, y, x+8, y-8)
+            self._amber_line(ct, x, y, x, y-24)
+
         def motion_notify_event(self, widget, event):
             """
                 Update cursor position, (event.{x,y}) and repaint view.
@@ -223,4 +285,6 @@ class EdenLauncher(MissionControll):
             width = widget.get_allocated_width()
             height = widget.get_allocated_height()
 
-            self.parent.selected_coord = (event.x/width, event.y/height)
+            if self.parent.cursor:
+                self.parent.selected_coord = (event.x/width, event.y/height)
+            self.app.window.get_window().invalidate_rect(None, False)
