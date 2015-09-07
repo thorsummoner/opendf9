@@ -86,6 +86,12 @@ class EdenLauncher(MissionControll):
         self.eden_distance = app.builder.get_object('eden_distance')
         self.eden_arrival = app.builder.get_object('eden_arrival')
 
+        self.eden_accept_accept = app.builder.get_object('eden_accept_accept')
+        self.eden_accept_accept.connect('clicked', self.on_eden_accept)
+        self.eden_accept_cancel = app.builder.get_object('eden_accept_cancel')
+        self.eden_accept_cancel.connect('clicked', self.on_eden_cancel)
+        self.eden_accept_neutral = app.builder.get_object('eden_accept_neutral')
+
         # Load Regional Data
         self.regional_factors_data = OraImage(self.REGIONAL_FACTORS_FILE)
 
@@ -95,23 +101,37 @@ class EdenLauncher(MissionControll):
 
     @selected_coord.setter
     def selected_coord(self, value):
-        self._selected_coord = self.get_cell(*value)
-        self.selected_settlement = value
-        self.cursor = False
-        self.eden_accept.set_sensitive(True)
+        if value:
+            self._selected_coord = self.get_cell(*value)
+            self.selected_settlement = value
+            self.cursor = False
+            self.eden_accept.set_sensitive(True)
 
-        parsec = self.get_parsec(*value)
+            parsec = self.get_parsec(*value)
 
-        self.eden_x2.set_text('{:.11}'.format(parsec[0]))
-        self.eden_y2.set_text('{:.11}'.format(parsec[1]))
+            self.eden_x2.set_text('{:.11}'.format(parsec[0]))
+            self.eden_y2.set_text('{:.11}'.format(parsec[1]))
 
-        distance = math.sqrt(
-            pow(parsec[0] - self.last_parsec[0], 2)
-            + pow(parsec[1] - self.last_parsec[1], 2)
-        )
+            distance = math.sqrt(
+                pow(parsec[0] - self.last_parsec[0], 2)
+                + pow(parsec[1] - self.last_parsec[1], 2)
+            )
 
-        self.eden_distance.set_text(str(distance))
-        self.eden_arrival.set_text(str(distance * PARSEC_LIGHTYEAR))
+            self.eden_distance.set_text(str(distance))
+            self.eden_arrival.set_text(str(distance * PARSEC_LIGHTYEAR))
+
+        else:
+            self._selected_coord = None
+            self.selected_settlement = None
+            self.cursor = True
+            self.eden_accept.set_sensitive(False)
+            self.eden_accept_neutral.set_active(True)
+            self.app.window.get_window().invalidate_rect(None, False)
+
+            self.eden_x2.set_text('')
+            self.eden_y2.set_text('')
+            self.eden_distance.set_text('')
+            self.eden_arrival.set_text('')
 
 
 
@@ -132,6 +152,12 @@ class EdenLauncher(MissionControll):
     def grid_toggle(self, widget):
         self.grid = widget.get_active()
         self.app.window.get_window().invalidate_rect(None, False)
+
+    def on_eden_accept(self, *_):
+        self.eden_accept.set_sensitive(False)
+
+    def on_eden_cancel(self, *_):
+        self.selected_coord = None
 
     class DrawingAreaHandler(object):
 
