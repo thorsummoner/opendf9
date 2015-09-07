@@ -15,12 +15,17 @@ TEXT_EXTENTS_KEYS = ('x_bearing', 'y_bearing', 'width', 'height', 'x_advance', '
 CELLS_WIDTH = 60
 CELLS_HEIGHT = 60
 
+UNIVERSE_SIZE = 28
+UNIVERSE_METRIC = 'Billion Parsecs'
+
 class EdenLauncher(MissionControll):
     CONTAINER = 'eden'
 
     GALAXY_MAP_BG = 'df9/assets/images/author-eso/2048px-Wide_Field_Imager_view_of_a_Milky_Way_look-alike_NGC_6744.jpg'
     FONT_FACE_FILE = 'df9/assets/fonts/ProFontWindows.ttf'
     FONT_FACE = FontLoader().cairo_font_face_from_file(FONT_FACE_FILE)
+
+    _selected_coord = None
 
     def __init__(self, app):
         super(EdenLauncher, self).__init__(app)
@@ -46,12 +51,37 @@ class EdenLauncher(MissionControll):
         eden_drawingarea.connect('motion_notify_event', eden_drawing_handler.motion_notify_event)
         eden_drawingarea.connect('button_release_event',  eden_drawing_handler.button_release_event)
 
+        # Get data form elements
+        self.eden_x = app.builder.get_object('eden_x')
+        self.eden_y = app.builder.get_object('eden_y')
+
+    @property
+    def selected_coord(self):
+        print 'called getter'
+        return self._selected_coord
+
+    @selected_coord.setter
+    def selected_coord(self, value):
+        self._selected_coord = self.get_cell(*value)
+
+        parsec = self.get_parsec(*value)
+
+        self.eden_x.set_text(str(parsec[0]))
+        self.eden_y.set_text(str(parsec[1]))
+
+
     def get_cell(self, cursor_percent_x, cursor_percent_y):
         cell_x = round(cursor_percent_x * CELLS_WIDTH)
         cell_y = round(cursor_percent_y * CELLS_HEIGHT)
         return (
             int(cell_x if cell_x > 0 else 1),
             int(cell_y if cell_y > 0 else 1),
+        )
+
+    def get_parsec(self, cursor_percent_x, cursor_percent_y):
+        return (
+            '{:>13.10}'.format(cursor_percent_x * UNIVERSE_SIZE),
+            '{:>13.10}'.format(cursor_percent_y * UNIVERSE_SIZE),
         )
 
     class DrawingAreaHandler(object):
@@ -192,10 +222,5 @@ class EdenLauncher(MissionControll):
         def button_release_event(self, widget, event):
             width = widget.get_allocated_width()
             height = widget.get_allocated_height()
-            print((
-                'click',
-                self.parent.get_cell(
-                    event.x/width,
-                    event.y/height,
-                )
-            ))
+
+            self.parent.selected_coord = (event.x/width, event.y/height)
