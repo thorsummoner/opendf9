@@ -68,6 +68,15 @@
       </packing>
     </child>
   </object>
+  <object class="GtkRadioButton" id="eden_accept_radiobutton">
+    <property name="label" translatable="yes">radiobutton</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="receives_default">False</property>
+    <property name="xalign">0</property>
+    <property name="active">True</property>
+    <property name="draw_indicator">True</property>
+  </object>
   <object class="GtkBox" id="eden">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -122,15 +131,18 @@
                                     <property name="shadow_type">in</property>
                                     <property name="obey_child">False</property>
                                     <child>
-                                      <object class="GtkButton" id="button1">
-                                        <property name="width_request">64</property>
-                                        <property name="height_request">64</property>
+                                      <object class="GtkRadioButton" id="radiobutton1">
                                         <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
                                         <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="xalign">0</property>
+                                        <property name="active">True</property>
+                                        <property name="draw_indicator">False</property>
+                                        <property name="group">eden_accept_radiobutton</property>
                                         <child>
                                           <object class="GtkImage" id="image1">
+                                            <property name="width_request">64</property>
+                                            <property name="height_request">64</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="icon_name">folder-download-symbolic</property>
@@ -218,15 +230,18 @@
                                     <property name="shadow_type">in</property>
                                     <property name="obey_child">False</property>
                                     <child>
-                                      <object class="GtkButton" id="button2">
-                                        <property name="width_request">64</property>
-                                        <property name="height_request">64</property>
+                                      <object class="GtkRadioButton" id="radiobutton2">
                                         <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
                                         <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="xalign">0</property>
+                                        <property name="active">True</property>
+                                        <property name="draw_indicator">False</property>
+                                        <property name="group">eden_accept_radiobutton</property>
                                         <child>
                                           <object class="GtkImage" id="image2">
+                                            <property name="width_request">64</property>
+                                            <property name="height_request">64</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="icon_name">action-unavailable-symbolic</property>
