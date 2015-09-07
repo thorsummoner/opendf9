@@ -10,7 +10,8 @@ class OpenDf9Window(window.Window):
         Main application window
     """
 
-    GLADE_FILE = '.glade'
+    GLADE_FILE = 'df9/.glade'
+    CSS_PROVIDER_FILE = 'df9/.css'
 
     def __init__(self, dev=False):
         super(OpenDf9Window, self).__init__()
