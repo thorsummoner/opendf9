@@ -10,6 +10,7 @@ import cairo
 
 from df9.mission_controll import MissionControll
 from df9.fontloader import FontLoader
+from df9.oraimage import OraImage
 
 FULL = 256.0
 
@@ -29,6 +30,14 @@ class EdenLauncher(MissionControll):
     GALAXY_MAP_BG = 'df9/assets/images/author-eso/2048px-Wide_Field_Imager_view_of_a_Milky_Way_look-alike_NGC_6744.jpg'
     FONT_FACE_FILE = 'df9/assets/fonts/ProFontWindows.ttf'
     FONT_FACE = FontLoader().cairo_font_face_from_file(FONT_FACE_FILE)
+    REGIONAL_FACTORS_FILE = 'df9/assets/eden/noise-stack.ora'
+
+    REGIONAL_FACTORS = (
+        {'name': 'Stellar Density',       'key': 'density'},
+        {'name': 'Warpgate Proximity',    'key': 'warp'},
+        {'name': 'Threat Factor',         'key': 'threat'},
+        {'name': 'Magnetic Interference', 'key': 'interference'},
+    )
 
     cursor = True
     last_settlement = ORIGINAL_COORD
@@ -76,6 +85,9 @@ class EdenLauncher(MissionControll):
         self.eden_y2 = app.builder.get_object('eden_y2')
         self.eden_distance = app.builder.get_object('eden_distance')
         self.eden_arrival = app.builder.get_object('eden_arrival')
+
+        # Load Regional Data
+        self.regional_factors_data = OraImage(self.REGIONAL_FACTORS_FILE)
 
     @property
     def selected_coord(self):
@@ -234,14 +246,18 @@ class EdenLauncher(MissionControll):
                 )
                 ct.set_dash([])
 
+                coord = list(self.parent.get_cell(
+                    cursor_x / width,
+                    cursor_y / height
+                ))
+                coord[0] = (coord[0] if 0 < coord[0] < CELLS_WIDTH else 0)
+                coord[1] = (coord[1] if 0 < coord[1] < CELLS_HEIGHT else 0)
+
                 if 'coordinate_info_offset':
                     ct.set_font_face(self.parent.FONT_FACE)
 
                     ct.set_font_size(20)
-                    text_coord = "({:>2}, {:>2})".format(*self.parent.get_cell(
-                        cursor_x / width,
-                        cursor_y / height
-                    ))
+                    text_coord = "({:>2}, {:>2})".format(*coord)
                     text_coord_extents = dict(zip(
                         TEXT_EXTENTS_KEYS,
                         ct.text_extents(text_coord)
@@ -254,6 +270,21 @@ class EdenLauncher(MissionControll):
                         (text_coord_y + self.COORD_Y_OFF if text_coord_y + self.COORD_Y_OFF < height - 10 else cursor_y - self.COORD_Y_OFF),
                         text_coord
                     )
+                if 'regional_factors':
+                    line_step = 24
+                    line = 0
+                    for factor in self.parent.REGIONAL_FACTORS:
+                        line += line_step
+                        self._amber_text(
+                            ct, 10, line, 
+                            '{:>21}: {:.3}'.format(
+                                factor['name'], 
+                                self.parent.regional_factors_data.layers[
+                                    factor['key']
+                                ]['pixels'][coord[0]][coord[1]] / FULL
+                            )
+                        )
+
 
         def _amber_line(self, ct, x1, y1, x2, y2):
             """
