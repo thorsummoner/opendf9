@@ -33,6 +33,7 @@ class EdenLauncher(MissionControll):
     cursor = True
     last_settlement = ORIGINAL_COORD
     selected_settlement = None
+    grid = False
 
     _selected_coord = None
 
@@ -62,6 +63,8 @@ class EdenLauncher(MissionControll):
 
         # Get data form elements
         self.eden_accept = app.builder.get_object('eden_accept')
+        self.eden_sectors = app.builder.get_object('eden_sectors')
+        self.eden_sectors.connect('toggled', self.grid_toggle)
 
         self.eden_x1 = app.builder.get_object('eden_x1')
         self.eden_y1 = app.builder.get_object('eden_y1')
@@ -101,8 +104,8 @@ class EdenLauncher(MissionControll):
 
 
     def get_cell(self, cursor_percent_x, cursor_percent_y):
-        cell_x = round(cursor_percent_x * CELLS_WIDTH)
-        cell_y = round(cursor_percent_y * CELLS_HEIGHT)
+        cell_x = math.ceil(cursor_percent_x * CELLS_WIDTH)
+        cell_y = math.ceil(cursor_percent_y * CELLS_HEIGHT)
         return (
             int(cell_x if cell_x > 0 else 1),
             int(cell_y if cell_y > 0 else 1),
@@ -113,6 +116,10 @@ class EdenLauncher(MissionControll):
             cursor_percent_x * UNIVERSE_SIZE,
             cursor_percent_y * UNIVERSE_SIZE,
         )
+
+    def grid_toggle(self, widget):
+        self.grid = widget.get_active()
+        self.app.window.get_window().invalidate_rect(None, False)
 
     class DrawingAreaHandler(object):
 
@@ -169,6 +176,23 @@ class EdenLauncher(MissionControll):
                 ct.paint()
 
                 ct.restore()
+
+            if self.parent.grid:
+                ct.set_source_rgba(
+                    self.COLOR_AMBER[0],
+                    self.COLOR_AMBER[1],
+                    self.COLOR_AMBER[2],
+                    0.1
+                )
+                width_step = width/60.0
+                height_step = height/60.0
+                for x in range(60):
+                    ct.move_to(x*width_step, 0)
+                    ct.line_to(x*width_step, height)
+                for y in range(60):
+                    ct.move_to(0, y*height_step)
+                    ct.line_to(width, y*height_step)
+                ct.stroke()
 
             if 'last_settlement':
                 self._amber_marker(ct,
