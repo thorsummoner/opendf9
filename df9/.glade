@@ -857,19 +857,22 @@
     <property name="can_focus">False</property>
     <property name="halign">start</property>
     <property name="valign">end</property>
+    <property name="border_width">13</property>
     <property name="orientation">vertical</property>
     <child>
-      <object class="GtkBox" id="box12">
+      <object class="GtkBox" id="box21">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkCheckButton" id="eden_cancel">
+          <object class="GtkCheckButton" id="eden_launch_cancel">
             <property name="label" translatable="yes">Cancel</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">False</property>
+            <property name="halign">start</property>
             <property name="xalign">0</property>
+            <property name="inconsistent">True</property>
             <property name="draw_indicator">True</property>
           </object>
           <packing>
@@ -883,7 +886,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkButton" id="button4">
+              <object class="GtkButton" id="eden_launch_launch">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -892,7 +895,6 @@
                     <property name="width_request">160</property>
                     <property name="height_request">60</property>
                     <property name="visible">True</property>
-                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">LAUNCH</property>
                   </object>

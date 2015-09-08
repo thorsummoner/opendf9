@@ -50,8 +50,9 @@ class EdenLauncher(MissionControll):
         super(EdenLauncher, self).__init__(app)
 
         # Load in gui elements that Glade can't handle AFAIK
+        self.eden_launch = app.builder.get_object('eden_launch')
         app.builder.get_object('eden_launch_overlay').add_overlay(
-            app.builder.get_object('eden_launch')
+            self.eden_launch
         )
 
         # Load space image
@@ -87,10 +88,15 @@ class EdenLauncher(MissionControll):
         self.eden_arrival = app.builder.get_object('eden_arrival')
 
         self.eden_accept_accept = app.builder.get_object('eden_accept_accept')
-        self.eden_accept_accept.connect('clicked', self.on_eden_accept)
+        self.eden_accept_accept.connect('clicked', self.on_eden_accept_accept)
         self.eden_accept_cancel = app.builder.get_object('eden_accept_cancel')
-        self.eden_accept_cancel.connect('clicked', self.on_eden_cancel)
+        self.eden_accept_cancel.connect('clicked', self.on_eden_accept_cancel)
         self.eden_accept_neutral = app.builder.get_object('eden_accept_neutral')
+
+        self.eden_launch_launch = app.builder.get_object('eden_launch_launch')
+        self.eden_launch_launch.connect('clicked', self.on_eden_launch_launch)
+        self.eden_launch_cancel = app.builder.get_object('eden_launch_cancel')
+        self.eden_launch_cancel.connect('button_press_event', self.on_eden_launch_cancel)
 
         # Load Regional Data
         self.regional_factors_data = OraImage(self.REGIONAL_FACTORS_FILE)
@@ -153,11 +159,19 @@ class EdenLauncher(MissionControll):
         self.grid = widget.get_active()
         self.app.window.get_window().invalidate_rect(None, False)
 
-    def on_eden_accept(self, *_):
+    def on_eden_accept_accept(self, *_):
         self.eden_accept.set_sensitive(False)
+        self.eden_launch.set_sensitive(True)
 
-    def on_eden_cancel(self, *_):
+    def on_eden_accept_cancel(self, *_):
         self.selected_coord = None
+
+    def on_eden_launch_launch(self, *_):
+        self.app.replace_mission_controll(self.app.loadingscreen)
+
+    def on_eden_launch_cancel(self, *_):
+        self.selected_coord = None
+        self.eden_launch.set_sensitive(False)
 
     class DrawingAreaHandler(object):
 
@@ -302,9 +316,9 @@ class EdenLauncher(MissionControll):
                     for factor in self.parent.REGIONAL_FACTORS:
                         line += line_step
                         self._amber_text(
-                            ct, 10, line, 
+                            ct, 10, line,
                             '{:>21}: {:.3}'.format(
-                                factor['name'], 
+                                factor['name'],
                                 self.parent.regional_factors_data.layers[
                                     factor['key']
                                 ]['pixels'][coord[0]][coord[1]] / FULL
