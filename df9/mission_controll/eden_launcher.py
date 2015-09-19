@@ -160,9 +160,10 @@ class EdenLauncher(MissionControll):
         """
         cell_x = math.ceil(cursor_percent_x * CELLS_WIDTH)
         cell_y = math.ceil(cursor_percent_y * CELLS_HEIGHT)
-        return (
-            int(cell_x if cell_x > 0 else 1),
-            int(cell_y if cell_y > 0 else 1),
+
+        return Coordinate(
+            x=int(cell_x if 0 < cell_x < CELLS_WIDTH else 0),
+            y=int(cell_y if 0 < cell_y < CELLS_HEIGHT else 0),
         )
 
     @staticmethod
@@ -225,16 +226,12 @@ class EdenLauncher(MissionControll):
             width = widget.get_allocated_width()
             height = widget.get_allocated_height()
 
-            cursor_x = 0
-            cursor_y = 0
-            try:
-                cursor_x = self.cursor_pos.x
-                cursor_y = self.cursor_pos.y
-                # And reset
-                self.cursor_pos = None
-            except AttributeError:
-                pass
-
+            cursor = Coordinate(
+                x=getattr(self.cursor_pos, 'x', 0),
+                y=getattr(self.cursor_pos, 'y', 0),
+            )
+            # And reset
+            self.cursor_pos = None
 
             if 'universe':
                 # Paint the universe
@@ -279,51 +276,61 @@ class EdenLauncher(MissionControll):
             if 'last_settlement':
                 self._amber_marker(
                     cairo_ct,
-                    self.parent.last_settlement[0]*width,
-                    self.parent.last_settlement[1]*height,
+                    Coordinate(
+                        x=self.parent.last_settlement[0]*width,
+                        y=self.parent.last_settlement[1]*height,
+                    )
                 )
             if self.parent.selected_settlement:
                 self._amber_marker(
                     cairo_ct,
-                    self.parent.selected_settlement[0]*width,
-                    self.parent.selected_settlement[1]*height,
+                    Coordinate(
+                        x=self.parent.selected_settlement[0]*width,
+                        y=self.parent.selected_settlement[1]*height,
+                    )
                 )
                 cairo_ct.set_dash([14.0, 6.0])
                 self._amber_line(
                     cairo_ct,
-                    self.parent.last_settlement[0]*width,
-                    self.parent.last_settlement[1]*height,
-                    self.parent.selected_settlement[0]*width,
-                    self.parent.selected_settlement[1]*height,
+                    Coordinate(
+                        x=self.parent.last_settlement[0]*width,
+                        y=self.parent.last_settlement[1]*height,
+                    ),
+                    Coordinate(
+                        x=self.parent.selected_settlement[0]*width,
+                        y=self.parent.selected_settlement[1]*height,
+                    ),
                 )
                 cairo_ct.set_dash([])
 
 
-            if self.parent.cursor and cursor_y > 0 and cursor_x > 0:
+            if self.parent.cursor and cursor.y > 0 and cursor.x > 0:
                 # Paint a cursor, Vertical Line
-                self._amber_line(cairo_ct, cursor_x, 0, cursor_x, height)
+                self._amber_line(
+                    cairo_ct,
+                    Coordinate(x=cursor.x, y=0),
+                    Coordinate(x=cursor.x, y=height),
+                )
 
                 # Paint a cursor, Diagonal Line
                 self._amber_line(
                     cairo_ct,
-                    0, cursor_y - (cursor_x * self.DIAGONAL_RATE),
-                    width, cursor_y + ((width - cursor_x) * self.DIAGONAL_RATE)
+                    Coordinate(x=0, y=cursor.y - (cursor.x * self.DIAGONAL_RATE)),
+                    Coordinate(x=width, y=cursor.y + ((width - cursor.x) * self.DIAGONAL_RATE)),
                 )
                 # Dashed counter-diagonal line
                 cairo_ct.set_dash([14.0, 6.0])
                 self._amber_line(
                     cairo_ct,
-                    cursor_x-width, cursor_y + (width * self.DIAGONAL_RATE),
-                    cursor_x+width, cursor_y - (width * self.DIAGONAL_RATE)
+                    Coordinate(x=cursor.x-width, y=cursor.y + (width * self.DIAGONAL_RATE)),
+                    Coordinate(x=cursor.x+width, y=cursor.y - (width * self.DIAGONAL_RATE)),
                 )
                 cairo_ct.set_dash([])
 
-                coord = list(self.parent.get_cell(
-                    cursor_x / width,
-                    cursor_y / height
-                ))
-                coord[0] = (coord[0] if 0 < coord[0] < CELLS_WIDTH else 0)
-                coord[1] = (coord[1] if 0 < coord[1] < CELLS_HEIGHT else 0)
+                coord = self.parent.get_cell(
+                    cursor.x / width,
+                    cursor.y / height
+                )
 
                 if 'coordinate_info_offset':
                     cairo_ct.set_font_face(self.parent.FONT_FACE)
@@ -335,19 +342,23 @@ class EdenLauncher(MissionControll):
                         cairo_ct.text_extents(text_coord)
                     ))
 
-                    text_coord_x = cursor_x - text_coord_extents['width']
-                    text_coord_y = cursor_y + text_coord_extents['height']
+                    text_coord_real = Coordinate(
+                        x=cursor.x - text_coord_extents['width'],
+                        y=cursor.y + text_coord_extents['height'],
+                    )
                     self._amber_text(
                         cairo_ct,
-                        (
-                            text_coord_x - self.COORD_X_OFF
-                            if text_coord_x - self.COORD_X_OFF > 10
-                            else cursor_x + self.COORD_X_OFF
-                        ),
-                        (
-                            text_coord_y + self.COORD_Y_OFF
-                            if text_coord_y + self.COORD_Y_OFF < height - 10
-                            else cursor_y - self.COORD_Y_OFF
+                        Coordinate(
+                            x=(
+                                text_coord_real.x - self.COORD_X_OFF
+                                if text_coord_real.x - self.COORD_X_OFF > 10
+                                else cursor.x + self.COORD_X_OFF
+                            ),
+                            y=(
+                                text_coord_real.y + self.COORD_Y_OFF
+                                if text_coord_real.y + self.COORD_Y_OFF < height - 10
+                                else cursor.y - self.COORD_Y_OFF
+                            ),
                         ),
                         text_coord
                     )
@@ -357,68 +368,74 @@ class EdenLauncher(MissionControll):
                     for factor in self.parent.REGIONAL_FACTORS:
                         line += line_step
                         self._amber_text(
-                            cairo_ct, 10, line,
+                            cairo_ct, Coordinate(x=10, y=line),
                             '{:>21}: {:.3}'.format(
                                 factor['name'],
                                 self.parent.regional_factors_data.layers[
                                     factor['key']
-                                ]['pixels'][coord[0]][coord[1]] / FULL
+                                ]['pixels'][coord.x][coord.y] / FULL
                             )
                         )
 
 
-        def _amber_line(self, cairo_ct, x1, y1, x2, y2):
+        def _amber_line(self, cairo_ct, coord1, coord2):
             """
                 Stroke a two-tone line.
             """
 
             cairo_ct.set_source_rgba(1, 1, 1, 0.5)
             cairo_ct.set_line_width(2.2)
-            cairo_ct.move_to(x1+self.AMBER_ACCENT_SHIFT/2.0, y1+self.AMBER_ACCENT_SHIFT/2.0)
-            cairo_ct.line_to(x2+self.AMBER_ACCENT_SHIFT/2.0, y2+self.AMBER_ACCENT_SHIFT/2.0)
+            cairo_ct.move_to(
+                coord1.x+self.AMBER_ACCENT_SHIFT/2.0,
+                coord1.y+self.AMBER_ACCENT_SHIFT/2.0
+            )
+            cairo_ct.line_to(
+                coord2.x+self.AMBER_ACCENT_SHIFT/2.0,
+                coord2.y+self.AMBER_ACCENT_SHIFT/2.0
+            )
             cairo_ct.stroke()
 
             cairo_ct.set_source_rgb(*self.COLOR_DARK_AMBER)
             cairo_ct.set_line_width(1.4)
-            cairo_ct.move_to(x1+self.AMBER_ACCENT_SHIFT, y1+self.AMBER_ACCENT_SHIFT)
-            cairo_ct.line_to(x2+self.AMBER_ACCENT_SHIFT, y2+self.AMBER_ACCENT_SHIFT)
+            cairo_ct.move_to(coord1.x+self.AMBER_ACCENT_SHIFT, coord1.y+self.AMBER_ACCENT_SHIFT)
+            cairo_ct.line_to(coord2.x+self.AMBER_ACCENT_SHIFT, coord2.y+self.AMBER_ACCENT_SHIFT)
             cairo_ct.stroke()
 
             cairo_ct.set_source_rgb(*self.COLOR_AMBER)
             cairo_ct.set_line_width(1)
-            cairo_ct.move_to(x1, y1)
-            cairo_ct.line_to(x2, y2)
+            cairo_ct.move_to(coord1.x, coord1.y)
+            cairo_ct.line_to(coord2.x, coord2.y)
             cairo_ct.stroke()
 
-        def _amber_text(self, cairo_ct, coord_x, coord_y, msg):
+        def _amber_text(self, cairo_ct, coord, msg):
             """
                 Sylized text painter
             """
             cairo_ct.set_source_rgb(*self.COLOR_DARK_AMBER)
-            cairo_ct.move_to(coord_x+self.AMBER_ACCENT_SHIFT, coord_y+self.AMBER_ACCENT_SHIFT)
+            cairo_ct.move_to(coord.x+self.AMBER_ACCENT_SHIFT, coord.y+self.AMBER_ACCENT_SHIFT)
             cairo_ct.show_text(msg)
 
             cairo_ct.set_source_rgb(*self.COLOR_AMBER)
-            cairo_ct.move_to(coord_x, coord_y)
+            cairo_ct.move_to(coord.x, coord.y)
             cairo_ct.show_text(msg)
 
-        def _amber_marker(self, cairo_ct, coord_x, coord_y):
+        def _amber_marker(self, cairo_ct, coord):
             """
                 Stylized coordinate marker
             """
             cairo_ct.set_source_rgb(*self.COLOR_DARK_AMBER)
-            cairo_ct.arc(coord_x, coord_y, 3, 0, 2*math.pi)
+            cairo_ct.arc(coord.x, coord.y, 3, 0, 2*math.pi)
             cairo_ct.fill()
             cairo_ct.set_source_rgb(*self.COLOR_AMBER)
             cairo_ct.arc(
-                coord_x+self.AMBER_ACCENT_SHIFT,
-                coord_y+self.AMBER_ACCENT_SHIFT,
+                coord.x+self.AMBER_ACCENT_SHIFT,
+                coord.y+self.AMBER_ACCENT_SHIFT,
                 3, 0, 2*math.pi
             )
             cairo_ct.fill()
-            self._amber_line(cairo_ct, coord_x, coord_y, coord_x-8, coord_y-8)
-            self._amber_line(cairo_ct, coord_x, coord_y, coord_x+8, coord_y-8)
-            self._amber_line(cairo_ct, coord_x, coord_y, coord_x, coord_y-24)
+            self._amber_line(cairo_ct, coord, Coordinate(coord.x-8, coord.y-8))
+            self._amber_line(cairo_ct, coord, Coordinate(coord.x+8, coord.y-8))
+            self._amber_line(cairo_ct, coord, Coordinate(coord.x, coord.y-24))
 
         def motion_notify_event(self, _, event):
             """
