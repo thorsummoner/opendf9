@@ -12,19 +12,19 @@ from df9.mission_controll import MissionControll
 from df9.fontloader import FontLoader
 from df9.oraimage import OraImage
 
+Coordinate = namedtuple('Coordinate', ['x', 'y'])
+Dimension = namedtuple('Dimension', ['width', 'height'])
+
 FULL = 256.0
 
 TEXT_EXTENTS_KEYS = ('x_bearing', 'y_bearing', 'width', 'height', 'x_advance', 'y_advance')
-CELLS_WIDTH = 60
-CELLS_HEIGHT = 60
+CELLS = Dimension(width=60, height=60)
 
 UNIVERSE_SIZE = 28
 UNIVERSE_METRIC = 'Billion Parsecs'
 PARSEC_LIGHTYEAR = 3.262
 
-ORIGINAL_COORD = (0.15116763695057492, 0.37949796350990855)
-
-Coordinate = namedtuple('Coordinate', ['x', 'y'])
+ORIGINAL_COORD = Coordinate(x=0.15116763695057492, y=0.37949796350990855)
 
 class EdenLauncher(MissionControll):
     """
@@ -158,12 +158,12 @@ class EdenLauncher(MissionControll):
         """
             Return grid cell for percent
         """
-        cell_x = math.ceil(cursor_percent_x * CELLS_WIDTH)
-        cell_y = math.ceil(cursor_percent_y * CELLS_HEIGHT)
+        cell_x = math.ceil(cursor_percent_x * CELLS.width)
+        cell_y = math.ceil(cursor_percent_y * CELLS.height)
 
         return Coordinate(
-            x=int(cell_x if 0 < cell_x < CELLS_WIDTH else 0),
-            y=int(cell_y if 0 < cell_y < CELLS_HEIGHT else 0),
+            x=int(cell_x if 0 < cell_x < CELLS.width else 0),
+            y=int(cell_y if 0 < cell_y < CELLS.height else 0),
         )
 
     @staticmethod
@@ -215,6 +215,10 @@ class EdenLauncher(MissionControll):
         COORD_Y_OFF = 48
 
         cursor_pos = None
+        _dimension = None
+        _cairo_ct = None
+        _cursor = Coordinate(x=0, y=0)
+        _coord = Coordinate(x=0, y=0)
 
         def __init__(self, parent, app):
             super(EdenLauncher.DrawingAreaHandler, self).__init__()
@@ -223,160 +227,211 @@ class EdenLauncher(MissionControll):
             self.app = app
 
         def draw(self, widget, cairo_ct):
-            width = widget.get_allocated_width()
-            height = widget.get_allocated_height()
+            """
+                draw a frame
+            """
+            self._cairo_ct = cairo_ct
+            self._dimension = Dimension(
+                width=widget.get_allocated_width(),
+                height=widget.get_allocated_height(),
+            )
 
-            cursor = Coordinate(
+            self._cursor = Coordinate(
                 x=getattr(self.cursor_pos, 'x', 0),
                 y=getattr(self.cursor_pos, 'y', 0),
             )
             # And reset
             self.cursor_pos = None
 
-            if 'universe':
-                # Paint the universe
-                img_width = float(self.parent.galaxy_map_bg.get_width())
-                img_height = float(self.parent.galaxy_map_bg.get_height())
-                # Scale
-                width_ratio = width / img_width
-                height_ratio = height / img_height
-                scale_xy = max(height_ratio, width_ratio)
-                # Center
-                off_x = (width  - round(img_width*scale_xy)) //2
-                off_y = (height - round(img_height*scale_xy)) //2
-
-                # Paint
-                cairo_ct.save()
-
-                cairo_ct.translate(off_x, off_y)
-                cairo_ct.scale(scale_xy, scale_xy)
-
-                Gdk.cairo_set_source_pixbuf(cairo_ct, self.parent.galaxy_map_bg, 0, 0)
-                cairo_ct.paint()
-
-                cairo_ct.restore()
+            self._draw_universe()
 
             if self.parent.grid:
-                cairo_ct.set_source_rgba(
-                    self.COLOR_AMBER[0],
-                    self.COLOR_AMBER[1],
-                    self.COLOR_AMBER[2],
-                    0.1
-                )
-                width_step = width/60.0
-                height_step = height/60.0
-                for grid_x in range(60):
-                    cairo_ct.move_to(grid_x*width_step, 0)
-                    cairo_ct.line_to(grid_x*width_step, height)
-                for grid_y in range(60):
-                    cairo_ct.move_to(0, grid_y*height_step)
-                    cairo_ct.line_to(width, grid_y*height_step)
-                cairo_ct.stroke()
+                self._draw_grid()
 
-            if 'last_settlement':
-                self._amber_marker(
-                    cairo_ct,
-                    Coordinate(
-                        x=self.parent.last_settlement[0]*width,
-                        y=self.parent.last_settlement[1]*height,
-                    )
-                )
+            self._draw_last_settlement()
+
             if self.parent.selected_settlement:
-                self._amber_marker(
-                    cairo_ct,
-                    Coordinate(
-                        x=self.parent.selected_settlement[0]*width,
-                        y=self.parent.selected_settlement[1]*height,
-                    )
+                self._draw_selected_settlement()
+
+            if self.parent.cursor and self._cursor.y > 0 and self._cursor.x > 0:
+                self._draw_cursor()
+                self._draw_coordinate_info()
+                self._draw_regional_factors()
+
+        def _draw_universe(self):
+            """
+                Paint the universe (background)
+            """
+            img_width = float(self.parent.galaxy_map_bg.get_width())
+            img_height = float(self.parent.galaxy_map_bg.get_height())
+            # Scale
+            width_ratio = self._dimension.width / img_width
+            height_ratio = self._dimension.height / img_height
+            scale_xy = max(height_ratio, width_ratio)
+            # Center
+            off_x = (self._dimension.width  - round(img_width*scale_xy)) //2
+            off_y = (self._dimension.height - round(img_height*scale_xy)) //2
+
+            # Paint
+            self._cairo_ct.save()
+
+            self._cairo_ct.translate(off_x, off_y)
+            self._cairo_ct.scale(scale_xy, scale_xy)
+
+            Gdk.cairo_set_source_pixbuf(self._cairo_ct, self.parent.galaxy_map_bg, 0, 0)
+            self._cairo_ct.paint()
+
+            self._cairo_ct.restore()
+
+        def _draw_grid(self):
+            """
+                Draw grid to match cells definition.
+            """
+            self._cairo_ct.set_source_rgba(
+                self.COLOR_AMBER[0],
+                self.COLOR_AMBER[1],
+                self.COLOR_AMBER[2],
+                0.1
+            )
+            width_step = self._dimension.width/60.0
+            height_step = self._dimension.height/60.0
+            for grid_x in range(60):
+                self._cairo_ct.move_to(grid_x*width_step, 0)
+            for grid_y in range(60):
+                self._cairo_ct.move_to(0, grid_y*height_step)
+                self._cairo_ct.line_to(self._dimension.width, grid_y*height_step)
+            self._cairo_ct.stroke()
+
+        def _draw_last_settlement(self):
+            """
+                Draw marker on previous settlement.
+            """
+            self._amber_marker(
+                self._cairo_ct,
+                Coordinate(
+                    x=self.parent.last_settlement[0]*self._dimension.width,
+                    y=self.parent.last_settlement[1]*self._dimension.height,
                 )
-                cairo_ct.set_dash([14.0, 6.0])
-                self._amber_line(
-                    cairo_ct,
-                    Coordinate(
-                        x=self.parent.last_settlement[0]*width,
-                        y=self.parent.last_settlement[1]*height,
+            )
+
+        def _draw_selected_settlement(self):
+            """
+                Draw marker on selected settlement.
+            """
+            self._amber_marker(
+                self._cairo_ct,
+                Coordinate(
+                    x=self.parent.selected_settlement[0]*self._dimension.width,
+                    y=self.parent.selected_settlement[1]*self._dimension.height,
+                )
+            )
+            self._cairo_ct.set_dash([14.0, 6.0])
+            self._amber_line(
+                self._cairo_ct,
+                Coordinate(
+                    x=self.parent.last_settlement[0]*self._dimension.width,
+                    y=self.parent.last_settlement[1]*self._dimension.height,
+                ),
+                Coordinate(
+                    x=self.parent.selected_settlement[0]*self._dimension.width,
+                    y=self.parent.selected_settlement[1]*self._dimension.height,
+                ),
+            )
+            self._cairo_ct.set_dash([])
+
+        def _draw_cursor(self):
+            """
+                Paint a cursor, Vertical Line
+            """
+            self._amber_line(
+                self._cairo_ct,
+                Coordinate(x=self._cursor.x, y=0),
+                Coordinate(x=self._cursor.x, y=self._dimension.height),
+            )
+
+            # Paint a cursor, Diagonal Line
+            self._amber_line(
+                self._cairo_ct,
+                Coordinate(x=0, y=self._cursor.y - (self._cursor.x * self.DIAGONAL_RATE)),
+                Coordinate(
+                    x=self._dimension.width,
+                    y=self._cursor.y \
+                        + ((self._dimension.width - self._cursor.x) \
+                        * self.DIAGONAL_RATE)
+                ),
+            )
+            # Dashed counter-diagonal line
+            self._cairo_ct.set_dash([14.0, 6.0])
+            self._amber_line(
+                self._cairo_ct,
+                Coordinate(
+                    x=self._cursor.x-self._dimension.width,
+                    y=self._cursor.y + (self._dimension.width * self.DIAGONAL_RATE)
+                ),
+                Coordinate(
+                    x=self._cursor.x+self._dimension.width,
+                    y=self._cursor.y - (self._dimension.width * self.DIAGONAL_RATE)
+                ),
+            )
+            self._cairo_ct.set_dash([])
+
+            self._coord = self.parent.get_cell(
+                self._cursor.x / self._dimension.width,
+                self._cursor.y / self._dimension.height
+            )
+
+        def _draw_coordinate_info(self):
+            """
+                Draw Coordinate of mouse
+            """
+            self._cairo_ct.set_font_face(self.parent.FONT_FACE)
+
+            self._cairo_ct.set_font_size(20)
+            text_coord = "({:>2}, {:>2})".format(*self._coord)
+            text_coord_extents = dict(zip(
+                TEXT_EXTENTS_KEYS,
+                self._cairo_ct.text_extents(text_coord)
+            ))
+
+            text_coord_real = Coordinate(
+                x=self._cursor.x - text_coord_extents['width'],
+                y=self._cursor.y + text_coord_extents['height'],
+            )
+            self._amber_text(
+                self._cairo_ct,
+                Coordinate(
+                    x=(
+                        text_coord_real.x - self.COORD_X_OFF
+                        if text_coord_real.x - self.COORD_X_OFF > 10
+                        else self._cursor.x + self.COORD_X_OFF
                     ),
-                    Coordinate(
-                        x=self.parent.selected_settlement[0]*width,
-                        y=self.parent.selected_settlement[1]*height,
+                    y=(
+                        text_coord_real.y + self.COORD_Y_OFF
+                        if text_coord_real.y + self.COORD_Y_OFF \
+                            < self._dimension.height - 10
+                        else self._cursor.y - self.COORD_Y_OFF
                     ),
-                )
-                cairo_ct.set_dash([])
+                ),
+                text_coord
+            )
 
-
-            if self.parent.cursor and cursor.y > 0 and cursor.x > 0:
-                # Paint a cursor, Vertical Line
-                self._amber_line(
-                    cairo_ct,
-                    Coordinate(x=cursor.x, y=0),
-                    Coordinate(x=cursor.x, y=height),
-                )
-
-                # Paint a cursor, Diagonal Line
-                self._amber_line(
-                    cairo_ct,
-                    Coordinate(x=0, y=cursor.y - (cursor.x * self.DIAGONAL_RATE)),
-                    Coordinate(x=width, y=cursor.y + ((width - cursor.x) * self.DIAGONAL_RATE)),
-                )
-                # Dashed counter-diagonal line
-                cairo_ct.set_dash([14.0, 6.0])
-                self._amber_line(
-                    cairo_ct,
-                    Coordinate(x=cursor.x-width, y=cursor.y + (width * self.DIAGONAL_RATE)),
-                    Coordinate(x=cursor.x+width, y=cursor.y - (width * self.DIAGONAL_RATE)),
-                )
-                cairo_ct.set_dash([])
-
-                coord = self.parent.get_cell(
-                    cursor.x / width,
-                    cursor.y / height
-                )
-
-                if 'coordinate_info_offset':
-                    cairo_ct.set_font_face(self.parent.FONT_FACE)
-
-                    cairo_ct.set_font_size(20)
-                    text_coord = "({:>2}, {:>2})".format(*coord)
-                    text_coord_extents = dict(zip(
-                        TEXT_EXTENTS_KEYS,
-                        cairo_ct.text_extents(text_coord)
-                    ))
-
-                    text_coord_real = Coordinate(
-                        x=cursor.x - text_coord_extents['width'],
-                        y=cursor.y + text_coord_extents['height'],
+        def _draw_regional_factors(self):
+            """
+                Draw regional_factors
+            """
+            line_step = 24
+            line = 0
+            for factor in self.parent.REGIONAL_FACTORS:
+                line += line_step
+                self._amber_text(
+                    self._cairo_ct, Coordinate(x=10, y=line),
+                    '{:>21}: {:.3}'.format(
+                        factor['name'],
+                        self.parent.regional_factors_data.layers[
+                            factor['key']
+                        ]['pixels'][self._coord.x][self._coord.y] / FULL
                     )
-                    self._amber_text(
-                        cairo_ct,
-                        Coordinate(
-                            x=(
-                                text_coord_real.x - self.COORD_X_OFF
-                                if text_coord_real.x - self.COORD_X_OFF > 10
-                                else cursor.x + self.COORD_X_OFF
-                            ),
-                            y=(
-                                text_coord_real.y + self.COORD_Y_OFF
-                                if text_coord_real.y + self.COORD_Y_OFF < height - 10
-                                else cursor.y - self.COORD_Y_OFF
-                            ),
-                        ),
-                        text_coord
-                    )
-                if 'regional_factors':
-                    line_step = 24
-                    line = 0
-                    for factor in self.parent.REGIONAL_FACTORS:
-                        line += line_step
-                        self._amber_text(
-                            cairo_ct, Coordinate(x=10, y=line),
-                            '{:>21}: {:.3}'.format(
-                                factor['name'],
-                                self.parent.regional_factors_data.layers[
-                                    factor['key']
-                                ]['pixels'][coord.x][coord.y] / FULL
-                            )
-                        )
-
+                )
 
         def _amber_line(self, cairo_ct, coord1, coord2):
             """
