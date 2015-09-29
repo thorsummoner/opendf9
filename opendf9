@@ -12,15 +12,22 @@ ARGP = argparse.ArgumentParser(
     description=__doc__,
     formatter_class=argparse.RawTextHelpFormatter,
 )
-ARGP.add_argument('--dev', action='store_true', help='Dev tools')
-
+ARGP.add_argument('--trace', action='store_true', help='Dump all called lines.')
 
 def main(argp=None):
     if argp is None:
         argp = ARGP.parse_args()
 
-    exit(df9.OpenDf9Window(dev=argp.dev).main())
+    if argp.trace:
+        import sys
 
+        def trace(frame, event, arg):
+            print "%s, %s:%d" % (event, frame.f_code.co_filename, frame.f_lineno)
+            return trace
+
+        sys.settrace(trace)
+
+    return df9.OpenDf9Window().main()
 
 if __name__ == '__main__':
-    main()
+    exit(main())

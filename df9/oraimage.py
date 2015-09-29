@@ -1,3 +1,6 @@
+"""
+    Load png data from ora files
+"""
 
 import zipfile
 import xml.etree.ElementTree as xml_object
@@ -8,6 +11,7 @@ import png as pypng
 
 PYPNG_HEADERS = ('width', 'height', 'pixels', 'metadata')
 
+#pylint: disable=R0903
 class OraImage(object):
     """docstring for OraImage"""
 
@@ -15,7 +19,7 @@ class OraImage(object):
         super(OraImage, self).__init__()
         self.file_path = file_path
         self.name = path.splitext(path.basename(file_path))[0]
-        
+
         self.zipfile = zipfile.ZipFile(file_path)
         self.metadata_stack = xml_object.fromstring(self.zipfile.read('stack.xml'))
 

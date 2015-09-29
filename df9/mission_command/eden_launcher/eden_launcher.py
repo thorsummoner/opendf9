@@ -8,7 +8,7 @@ from collections import namedtuple
 from gi.repository import Gdk
 from gi.repository import GdkPixbuf
 
-from df9.mission_controll import MissionControll
+from df9.mission_command import MissionCommand
 from df9.fontloader import FontLoader
 from df9.oraimage import OraImage
 
@@ -26,7 +26,7 @@ PARSEC_LIGHTYEAR = 3.262
 
 ORIGINAL_COORD = Coordinate(x=0.15116763695057492, y=0.37949796350990855)
 
-class EdenLauncher(MissionControll):
+class EdenLauncher(MissionCommand):
     """
         New game starting conditions screen
     """

@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
-import window
-import os
+"""
+    Open DF9 Main
+"""
 
-import df9.mission_controll
+import df9.gui.window
+import df9.gui.command
 
-class OpenDf9Window(window.Window):
+import df9.mission_command
+
+class OpenDf9Window(df9.gui.window.Window):
     """
         Main application window
     """
@@ -13,32 +17,46 @@ class OpenDf9Window(window.Window):
     GLADE_FILE = 'df9/.glade'
     CSS_PROVIDER_FILE = 'df9/.css'
 
-    loadingscreen = None
-    edenlauncher = None
+    main_container = None
+    commands = None
+    _command = None
 
-    def __init__(self, dev=False):
+    def __init__(self):
         super(OpenDf9Window, self).__init__()
-
         self.main_container = self.window
-        if dev:
-            # Add an additional frame arround the main display with dev tools
-            self.replace_child(self.window, self.builder.get_object('dev'))
-            self.main_container = self.builder.get_object('dev-mount')
+        self.commands = dict()
 
-        # Show loading screen
-        self.loadingscreen = df9.mission_controll.LoadingScreen(self).widget
-        self.replace_mission_controll(self.loadingscreen)
+        self.register_command(df9.mission_command.LoadingScreen)
+        self.command('LoadingScreen', df9.mission_command.EdenLauncher)
 
-        # Initialize game parts
-        self.edenlauncher = df9.mission_controll.EdenLauncher(self).widget
+    def register_command(self, command):
+        """
+            Add a command to the loaded commands list
+        """
 
-        # Show new game screen
-        self.replace_mission_controll(self.edenlauncher)
+        self.commands[command.__name__] = command
 
-    def replace_mission_controll(self, new_control):
-        self.replace_child(self.main_container, new_control)
+    def command(self, command_name, post_register=None):
+        """
+            Replace the current command with command `command_name`
+            from the `commands`
 
-    class Handler(window.Window.BaseHandler):
+            Args:
+                command_name: Class name of the command module to display
+                post_register: After displaying the command_name module
+                    register this new class and display it.
+        """
+
+        self.replace_child(self.main_container, self.commands[command_name])
+        self._command = command_name
+
+        if post_register is not None:
+            self.register_command(post_register)
+            self.command(post_register.__class__.__name__)
+
+
+    #pylint: disable=too-few-public-methods, undefined-variable, no-init
+    class Handler(df9.gui.window.Window.Handler):
         """
             Main Window Event Handler
         """

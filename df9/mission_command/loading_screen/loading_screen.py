@@ -17,9 +17,14 @@
 import textwrap
 
 import df9.version_git
-from df9.mission_controll import MissionControll
+from df9.mission_command import MissionCommand
 
-class LoadingScreen(MissionControll):
+from gi.repository import Gtk
+
+class LoadingScreen(MissionCommand):
+    """
+        Loading spinner
+    """
     CONTAINER = 'loading'
     def __init__(self, app):
         super(LoadingScreen, self).__init__(app)
